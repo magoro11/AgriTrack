@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../api'
+import { getLastUsedEmail, persistAuthSession, setLastUsedEmail } from '../auth'
 
 export default function LoginPage({ onLogin }) {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(() => getLastUsedEmail())
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -14,13 +15,10 @@ export default function LoginPage({ onLogin }) {
     setError(null)
     setIsLoading(true)
     try {
+      setLastUsedEmail(email)
       const response = await api.post('/auth/login/', { email, password })
       const { access, refresh, user } = response.data
-      localStorage.setItem('agri_access_token', access)
-      localStorage.setItem('agri_refresh_token', refresh)
-      localStorage.setItem('agri_user_role', user.role)
-      localStorage.setItem('agri_user_email', user.email)
-      localStorage.setItem('agri_user_name', user.full_name || user.email.split('@')[0])
+      persistAuthSession({ access, refresh, user })
       if (onLogin) {
         onLogin(access, user.role)
       }

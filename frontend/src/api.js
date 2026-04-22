@@ -1,7 +1,10 @@
 import axios from 'axios'
+import { clearStoredAuth, getStoredAuth, updateStoredAccessToken } from './auth'
+
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+    baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -22,8 +25,24 @@ const processQueue = (error, token = null) => {
     failedQueue = []
 }
 
+export async function refreshAccessToken() {
+    const { refreshToken } = getStoredAuth()
+    if (!refreshToken) {
+        throw new Error('No refresh token available')
+    }
+
+    const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
+        refresh: refreshToken
+    })
+
+    const { access } = response.data
+    updateStoredAccessToken(access)
+    api.defaults.headers.common.Authorization = `Bearer ${access}`
+    return access
+}
+
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('agri_access_token')
+    const { accessToken: token } = getStoredAuth()
     if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
     }
@@ -48,7 +67,7 @@ api.interceptors.response.use(
             originalRequest._retry = true
             isRefreshing = true
 
-            const refreshToken = localStorage.getItem('agri_refresh_token')
+            const { refreshToken } = getStoredAuth()
             if (!refreshToken) {
                 // No refresh token, redirect to login
                 window.location.href = '/login'
@@ -56,22 +75,13 @@ api.interceptors.response.use(
             }
 
             try {
-                const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/auth/token/refresh/`, {
-                    refresh: refreshToken
-                })
-                const { access } = response.data
-                localStorage.setItem('agri_access_token', access)
-                api.defaults.headers.common['Authorization'] = `Bearer ${access}`
+                const access = await refreshAccessToken()
                 processQueue(null, access)
                 return api(originalRequest)
             } catch (refreshError) {
                 processQueue(refreshError, null)
-                    // Refresh failed, redirect to login
-                localStorage.removeItem('agri_access_token')
-                localStorage.removeItem('agri_refresh_token')
-                localStorage.removeItem('agri_user_role')
-                localStorage.removeItem('agri_user_email')
-                localStorage.removeItem('agri_user_name')
+                // Refresh failed, redirect to login
+                clearStoredAuth()
                 window.location.href = '/login'
                 return Promise.reject(refreshError)
             } finally {

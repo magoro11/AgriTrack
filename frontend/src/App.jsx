@@ -1,37 +1,88 @@
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import AdminDashboard from './pages/AdminDashboard'
 import AgentDashboard from './pages/AgentDashboard'
 import FieldManagement from './pages/FieldManagement'
 import Navbar from './components/Navbar'
+import { clearStoredAuth, getStoredAuth } from './auth'
+import { refreshAccessToken } from './api'
 
 function App() {
   const navigate = useNavigate()
-  const [token, setToken] = useState(localStorage.getItem('agri_access_token'))
-  const [role, setRole] = useState(localStorage.getItem('agri_user_role'))
+  const [token, setToken] = useState(() => getStoredAuth().accessToken)
+  const [role, setRole] = useState(() => getStoredAuth().role)
+  const [authReady, setAuthReady] = useState(false)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const restoreSession = async () => {
+      const { accessToken, refreshToken, role: storedRole } = getStoredAuth()
+
+      if (accessToken && storedRole) {
+        if (isMounted) {
+          setToken(accessToken)
+          setRole(storedRole)
+          setAuthReady(true)
+        }
+        return
+      }
+
+      if (refreshToken && storedRole) {
+        try {
+          const nextAccessToken = await refreshAccessToken()
+          if (isMounted) {
+            setToken(nextAccessToken)
+            setRole(storedRole)
+          }
+        } catch (error) {
+          clearStoredAuth()
+          if (isMounted) {
+            setToken(null)
+            setRole(null)
+          }
+        }
+      }
+
+      if (isMounted) {
+        setAuthReady(true)
+      }
+    }
+
+    restoreSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem('agri_access_token')
-    localStorage.removeItem('agri_user_role')
-    localStorage.removeItem('agri_user_email')
-    localStorage.removeItem('agri_user_name')
+    clearStoredAuth()
     setToken(null)
     setRole(null)
     navigate('/login')
   }
 
   const handleLogin = (accessToken, userRole) => {
-    localStorage.setItem('agri_access_token', accessToken)
-    localStorage.setItem('agri_user_role', userRole)
     setToken(accessToken)
     setRole(userRole)
   }
 
   // Protected route wrapper with navbar
-  const ProtectedRoute = ({ element }) => {
+  const ProtectedRoute = ({ element, allowedRole }) => {
+    if (!authReady) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">
+          Restoring your session...
+        </div>
+      )
+    }
+
     if (!token) return <Navigate to="/login" />
+    if (allowedRole && role !== allowedRole) return <Navigate to="/login" />
+
     return (
       <>
         <Navbar onLogout={handleLogout} token={token} role={role} />
@@ -46,10 +97,10 @@ function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="/admin" element={token && role === 'admin' ? <ProtectedRoute element={<AdminDashboard />} /> : <Navigate to="/login" />} />
-        <Route path="/admin/fields" element={token && role === 'admin' ? <ProtectedRoute element={<FieldManagement />} /> : <Navigate to="/login" />} />
-        <Route path="/agent" element={token && role === 'agent' ? <ProtectedRoute element={<AgentDashboard />} /> : <Navigate to="/login" />} />
+        <Route path="/login" element={authReady && token ? <Navigate to={role === 'admin' ? '/admin' : '/agent'} /> : <LoginPage onLogin={handleLogin} />} />
+        <Route path="/admin" element={<ProtectedRoute element={<AdminDashboard />} allowedRole="admin" />} />
+        <Route path="/admin/fields" element={<ProtectedRoute element={<FieldManagement />} allowedRole="admin" />} />
+        <Route path="/agent" element={<ProtectedRoute element={<AgentDashboard />} allowedRole="agent" />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
