@@ -102,12 +102,14 @@ export default function LoginPage({ onLogin }) {
             <p className="text-sm text-slate-400 mb-4">Try demo accounts:</p>
             <div className="grid grid-cols-2 gap-3">
               <button
+                type="button"
                 onClick={fillDemoAdmin}
                 className="rounded-lg bg-emerald-900/30 border border-emerald-700/50 px-3 py-2 text-sm text-emerald-300 hover:bg-emerald-900/50 transition"
               >
                 Demo Admin
               </button>
               <button
+                type="button"
                 onClick={fillDemoAgent}
                 className="rounded-lg bg-sky-900/30 border border-sky-700/50 px-3 py-2 text-sm text-sky-300 hover:bg-sky-900/50 transition"
               >
