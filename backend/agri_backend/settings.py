@@ -4,11 +4,28 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-agri-track-secret-key'
+def env_flag(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
-DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'testserver']
+def env_list(name, default=None):
+    value = os.getenv(name)
+    if not value:
+        return list(default or [])
+    return [item.strip() for item in value.split(',') if item.strip()]
+
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-agri-track-secret-key')
+
+DEBUG = env_flag('DEBUG', default=True)
+
+ALLOWED_HOSTS = env_list(
+    'ALLOWED_HOSTS',
+    default=['localhost', '127.0.0.1', 'testserver', '.railway.app', '.up.railway.app'],
+)
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -111,13 +128,32 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:4173',
-    'http://127.0.0.1:4173',
-    'http://localhost:4174',
-    'http://127.0.0.1:4174',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+CORS_ALLOWED_ORIGINS = env_list(
+    'CORS_ALLOWED_ORIGINS',
+    default=[
+        'http://localhost:4173',
+        'http://127.0.0.1:4173',
+        'http://localhost:4174',
+        'http://127.0.0.1:4174',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ],
+)
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://.*\.vercel\.app$',
 ]
+
+CSRF_TRUSTED_ORIGINS = env_list(
+    'CSRF_TRUSTED_ORIGINS',
+    default=[
+        'http://localhost:4173',
+        'http://127.0.0.1:4173',
+        'http://localhost:4174',
+        'http://127.0.0.1:4174',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ],
+)
 
 CORS_ALLOW_CREDENTIALS = True
