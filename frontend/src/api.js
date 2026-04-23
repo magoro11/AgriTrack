@@ -3,12 +3,13 @@ import { clearStoredAuth, getStoredAuth, updateStoredAccessToken } from './auth'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 
-// Production must use same-origin `/api` so hosts like Vercel can reverse-proxy to Railway
-// without the browser making cross-origin requests (which need CORS and a healthy origin).
-// Do not set `VITE_API_URL` to your Railway URL in Vercel production builds.
+// Production: same-origin `/api` (e.g. Vercel rewrite → Railway).
+// Development: same-origin `/api` by default so Vite proxies to Django (see vite.config.js).
+// That works for localhost and LAN IPs (e.g. http://192.168.x.x:5173) without CORS issues.
+// Set `VITE_API_URL` only if you intentionally bypass the dev proxy.
 export const API_BASE_URL = import.meta.env.PROD
     ? '/api'
-    : (configuredApiUrl || 'http://localhost:8000/api')
+    : (configuredApiUrl || '/api')
 
 const api = axios.create({
     baseURL: API_BASE_URL,

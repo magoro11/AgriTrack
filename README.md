@@ -56,18 +56,13 @@ Open a second terminal:
 
 ```powershell
 cd frontend
-copy .env.example .env.local
 npm install
 npm run dev
 ```
 
 The frontend will run on Vite's local dev server, usually `http://localhost:5173` unless that port is occupied.
 
-Set `frontend/.env.local` to:
-
-```env
-VITE_API_URL=http://localhost:8000/api
-```
+Local API calls use same-origin `/api`; [`frontend/vite.config.js`](./frontend/vite.config.js) **proxies** `/api` to `http://127.0.0.1:8000`, so you do not need `VITE_API_URL` for normal local sign-in (including opening the dev server from a LAN URL like `http://192.168.x.x:5173`). Optional: set `VITE_DEV_PROXY_TARGET` in `.env.local` if Django is not on port `8000`.
 
 For Vercel deployments:
 
