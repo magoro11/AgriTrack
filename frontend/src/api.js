@@ -2,9 +2,13 @@ import axios from 'axios'
 import { clearStoredAuth, getStoredAuth, updateStoredAccessToken } from './auth'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
-const isDevEnvironment = import.meta.env.DEV
 
-export const API_BASE_URL = configuredApiUrl || (isDevEnvironment ? 'http://localhost:8000/api' : '/api')
+// Production must use same-origin `/api` so hosts like Vercel can reverse-proxy to Railway
+// without the browser making cross-origin requests (which need CORS and a healthy origin).
+// Do not set `VITE_API_URL` to your Railway URL in Vercel production builds.
+export const API_BASE_URL = import.meta.env.PROD
+    ? '/api'
+    : (configuredApiUrl || 'http://localhost:8000/api')
 
 const api = axios.create({
     baseURL: API_BASE_URL,
