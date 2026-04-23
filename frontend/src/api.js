@@ -1,11 +1,10 @@
 import axios from 'axios'
 import { clearStoredAuth, getStoredAuth, updateStoredAccessToken } from './auth'
 
-const isLocalDevelopmentHost = typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
+const isDevEnvironment = import.meta.env.DEV
 
-export const API_BASE_URL = isLocalDevelopmentHost
-    ? (import.meta.env.VITE_API_URL || 'http://localhost:8000/api')
-    : '/api'
+export const API_BASE_URL = configuredApiUrl || (isDevEnvironment ? 'http://localhost:8000/api' : '/api')
 
 const api = axios.create({
     baseURL: API_BASE_URL,

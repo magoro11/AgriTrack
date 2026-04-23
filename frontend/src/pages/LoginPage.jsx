@@ -32,8 +32,12 @@ export default function LoginPage({ onLogin }) {
         navigate('/agent')
       }
     } catch (err) {
-      if (err.response?.data?.detail) {
-        setError(err.response.data.detail)
+      const status = err.response?.status
+      const detail = err.response?.data?.detail
+      if (detail) {
+        setError(typeof detail === 'string' ? detail : JSON.stringify(detail))
+      } else if (status >= 500) {
+        setError('Sign-in service is unavailable (server error). Check that the API is deployed and healthy, then try again.')
       } else if (err.code === 'ERR_NETWORK') {
         setError(`Cannot reach the API at ${API_BASE_URL}. Check that the backend is running and allows this frontend origin.`)
       } else {

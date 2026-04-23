@@ -72,9 +72,13 @@ VITE_API_URL=http://localhost:8000/api
 For Vercel deployments:
 
 - Set the Vercel project Root Directory to `frontend`
-- Set `BACKEND_URL` in the Vercel project settings to your deployed Django backend origin, for example `https://your-backend.up.railway.app`
+- Update [`frontend/vercel.json`](./frontend/vercel.json) so the regex rewrite `^/api/(.*)$` forwards to your Railway host (for example `https://your-backend.up.railway.app/api/$1`)
 - Remove any production `VITE_API_URL` value so the deployed frontend uses same-origin `/api`
-- The frontend-local Vercel function in [`frontend/api/[...path].js`](./frontend/api/[...path].js) will proxy requests to `BACKEND_URL`
+
+For Railway (or similar) backend deployments:
+
+- If the service root is the **repo root** (`AgriTrack/`), the root [`Procfile`](./Procfile) runs [`start.sh`](./start.sh), which `cd`s into `backend/` when needed.
+- If the service root is **`backend/`** only, use [`backend/Procfile`](./backend/Procfile) (no `chdir`) so Gunicorn can load `agri_backend.wsgi`.
 
 ## Demo Accounts
 
@@ -120,5 +124,5 @@ After running `python manage.py create_test_users`:
 ## Deployment Notes
 
 - If Vercel is rooted at `frontend`, use [`frontend/vercel.json`](./frontend/vercel.json) for the build settings.
-- Vercel API requests are proxied through `frontend/api/[...path].js`, which forwards `/api/*` calls to the backend origin defined by `BACKEND_URL`.
+- Vercel API requests are proxied with a rewrite rule in [`frontend/vercel.json`](./frontend/vercel.json), forwarding `/api/*` to your backend origin.
 - For production, the backend should move off SQLite, use environment variables for secrets, and run with `DEBUG = False`.
