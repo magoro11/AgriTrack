@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import api from '../api'
+import api, { API_BASE_URL } from '../api'
 import { getLastUsedEmail, persistAuthSession, setLastUsedEmail } from '../auth'
 
 export default function LoginPage({ onLogin }) {
@@ -14,14 +14,18 @@ export default function LoginPage({ onLogin }) {
     event.preventDefault()
     setError(null)
     setIsLoading(true)
+
     try {
       setLastUsedEmail(email)
       const response = await api.post('/auth/login/', { email, password })
       const { access, refresh, user } = response.data
+
       persistAuthSession({ access, refresh, user })
+
       if (onLogin) {
         onLogin(access, user.role)
       }
+
       if (user.role === 'admin') {
         navigate('/admin')
       } else {
@@ -31,7 +35,7 @@ export default function LoginPage({ onLogin }) {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail)
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Cannot reach the API. Check that the backend is running and allows this frontend origin.')
+        setError(`Cannot reach the API at ${API_BASE_URL}. Check that the backend is running and allows this frontend origin.`)
       } else {
         setError('Failed to sign in')
       }
@@ -53,7 +57,7 @@ export default function LoginPage({ onLogin }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center">
       <Link to="/" className="fixed top-6 left-6 text-2xl font-bold bg-gradient-to-r from-emerald-400 to-sky-400 bg-clip-text text-transparent hover:opacity-80">
-        🌾 AgriTrack
+        AgriTrack
       </Link>
 
       <div className="w-full max-w-md mx-auto px-4">
@@ -84,7 +88,7 @@ export default function LoginPage({ onLogin }) {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 type="password"
-                placeholder="••••••••"
+                placeholder="Password"
                 required
               />
             </div>
@@ -136,7 +140,7 @@ export default function LoginPage({ onLogin }) {
         </div>
 
         <p className="text-center text-slate-500 text-sm mt-6">
-          © 2026 AgriTrack. All rights reserved.
+          Copyright 2026 AgriTrack. All rights reserved.
         </p>
       </div>
     </div>
