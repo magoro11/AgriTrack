@@ -28,7 +28,13 @@ export default function LoginPage({ onLogin }) {
         navigate('/agent')
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to sign in')
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail)
+      } else if (err.code === 'ERR_NETWORK') {
+        setError('Cannot reach the API. Check that the backend is running and allows this frontend origin.')
+      } else {
+        setError('Failed to sign in')
+      }
     } finally {
       setIsLoading(false)
     }
