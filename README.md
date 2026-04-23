@@ -71,9 +71,10 @@ VITE_API_URL=http://localhost:8000/api
 
 For Vercel deployments:
 
+- Set the Vercel project Root Directory to `frontend`
 - Set `BACKEND_URL` in the Vercel project settings to your deployed Django backend origin, for example `https://your-backend.up.railway.app`
-- Do not point `VITE_API_URL` at `localhost` in production builds
-- The frontend will call same-origin `/api` on Vercel, and the Vercel function in [`api/[...path].js`](./api/[...path].js) will proxy requests to `BACKEND_URL`
+- Remove any production `VITE_API_URL` value so the deployed frontend uses same-origin `/api`
+- The frontend-local Vercel function in [`frontend/api/[...path].js`](./frontend/api/[...path].js) will proxy requests to `BACKEND_URL`
 
 ## Demo Accounts
 
@@ -118,6 +119,6 @@ After running `python manage.py create_test_users`:
 
 ## Deployment Notes
 
-- `vercel.json` is set up to build the frontend from `frontend/`.
-- Vercel API requests are proxied through `api/[...path].js`, which forwards `/api/*` calls to the backend origin defined by `BACKEND_URL`.
+- If Vercel is rooted at `frontend`, use [`frontend/vercel.json`](./frontend/vercel.json) for the build settings.
+- Vercel API requests are proxied through `frontend/api/[...path].js`, which forwards `/api/*` calls to the backend origin defined by `BACKEND_URL`.
 - For production, the backend should move off SQLite, use environment variables for secrets, and run with `DEBUG = False`.
