@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from urllib.parse import urlparse, unquote
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -16,6 +17,42 @@ def env_list(name, default=None):
     if not value:
         return list(default or [])
     return [item.strip() for item in value.split(',') if item.strip()]
+
+
+def postgres_database_config():
+    database_url = os.getenv('DATABASE_URL')
+
+    if database_url:
+        parsed = urlparse(database_url)
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': unquote(parsed.path.lstrip('/')),
+            'USER': unquote(parsed.username or ''),
+            'PASSWORD': unquote(parsed.password or ''),
+            'HOST': parsed.hostname or '',
+            'PORT': str(parsed.port or 5432),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+            'OPTIONS': {
+                'sslmode': os.getenv('PGSSLMODE', 'require'),
+            },
+        }
+
+    pg_host = os.getenv('PGHOST')
+    if pg_host:
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE', ''),
+            'USER': os.getenv('PGUSER', ''),
+            'PASSWORD': os.getenv('PGPASSWORD', ''),
+            'HOST': pg_host,
+            'PORT': os.getenv('PGPORT', '5432'),
+            'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+            'OPTIONS': {
+                'sslmode': os.getenv('PGSSLMODE', 'require'),
+            },
+        }
+
+    return None
 
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-agri-track-secret-key')
@@ -74,7 +111,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'agri_backend.wsgi.application'
 
 DATABASES = {
-    'default': {
+    'default': postgres_database_config() or {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
