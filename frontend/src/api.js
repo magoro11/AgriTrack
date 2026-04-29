@@ -3,13 +3,9 @@ import { clearStoredAuth, getStoredAuth, updateStoredAccessToken } from './auth'
 
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 
-// Production: same-origin `/api` (e.g. Vercel rewrite → Railway).
-// Development: same-origin `/api` by default so Vite proxies to Django (see vite.config.js).
-// That works for localhost and LAN IPs (e.g. http://192.168.x.x:5173) without CORS issues.
-// Set `VITE_API_URL` only if you intentionally bypass the dev proxy.
-export const API_BASE_URL = import.meta.env.PROD
-    ? '/api'
-    : (configuredApiUrl || '/api')
+// Production can point directly at the deployed backend via VITE_API_URL.
+// Development uses same-origin `/api` by default so Vite can proxy to Django.
+export const API_BASE_URL = configuredApiUrl || '/api'
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -77,7 +73,6 @@ api.interceptors.response.use(
 
             const { refreshToken } = getStoredAuth()
             if (!refreshToken) {
-                // No refresh token, redirect to login
                 window.location.href = '/login'
                 return Promise.reject(error)
             }
@@ -88,7 +83,6 @@ api.interceptors.response.use(
                 return api(originalRequest)
             } catch (refreshError) {
                 processQueue(refreshError, null)
-                // Refresh failed, redirect to login
                 clearStoredAuth()
                 window.location.href = '/login'
                 return Promise.reject(refreshError)
