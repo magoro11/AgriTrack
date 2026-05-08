@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 import api from '../api'
 import FieldCard from '../components/FieldCard'
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Admin Header with Profile Info */}
       <div className="mb-6 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 p-6 shadow-lg text-white">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/20">
               <span className="text-2xl">👤</span>
@@ -85,12 +86,20 @@ export default function AdminDashboard() {
               <p className="text-sm text-emerald-100/80">{adminEmail}</p>
             </div>
           </div>
-          <button
-            onClick={() => setShowCreateAgent(true)}
-            className="rounded-lg bg-white text-emerald-700 px-6 py-2 font-semibold hover:bg-emerald-50 transition"
-          >
-            + Add Agent
-          </button>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <Link
+              to="/"
+              className="rounded-lg border border-white/60 px-5 py-2 font-semibold text-white transition hover:bg-white/10"
+            >
+              Main Page
+            </Link>
+            <button
+              onClick={() => setShowCreateAgent(true)}
+              className="rounded-lg bg-white text-emerald-700 px-6 py-2 font-semibold hover:bg-emerald-50 transition"
+            >
+              + Add Agent
+            </button>
+          </div>
         </div>
       </div>
 
