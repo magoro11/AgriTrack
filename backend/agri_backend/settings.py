@@ -61,7 +61,7 @@ DEBUG = env_flag('DEBUG', default=True)
 
 ALLOWED_HOSTS = env_list(
     'ALLOWED_HOSTS',
-    default=['localhost', '127.0.0.1', 'testserver', '.railway.app', '.up.railway.app'],
+    default=['localhost', '127.0.0.1', 'testserver', '.vercel.app', '.railway.app', '.up.railway.app'],
 )
 
 INSTALLED_APPS = [

@@ -6,7 +6,11 @@ const HOP_BY_HOP_HEADERS = new Set([
 ])
 
 function getBackendOrigin() {
-  const backendUrl = process.env.BACKEND_URL || 'https://handsome-tranquility-production.up.railway.app'
+  const backendUrl = process.env.BACKEND_URL
+  if (!backendUrl) {
+    throw new Error('BACKEND_URL is not configured.')
+  }
+
   return backendUrl.replace(/\/+$/, '')
 }
 
